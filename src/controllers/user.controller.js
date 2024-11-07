@@ -206,8 +206,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrectPossword = asyncHandler(async(req, res) => {
     const {oldPassword, newPassword} = req.body
-    const user = await User.findById(req.user?.-id)
-    const isPasswordCorrect = user.isPasswordCorrect(oldPassword)\
+    const user = await User.findById(req.user?._id)
+    const isPasswordCorrect = user.isPasswordCorrect(oldPassword)
     if(!isPasswordCorrect){
         throw new ApiError(400, "Password is wrong")
     }
@@ -364,7 +364,6 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
 })
 export { 
-    registerUser,
     changeCurrectPossword,
     refreshAccessToken,
     registerUser,

@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 import { pipeline } from "stream";
 
 
@@ -138,8 +139,8 @@ const logoutUser = asyncHandler(async (req, res) =>{
    await User.findByIdAndUpdate(
     req.user._id,
     {
-        $set: {
-            refreshToken: undefined
+        $unset: {
+            refreshToken: 1
         }
     },
     {
@@ -311,7 +312,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             $lookup: {
                 from: "subscriptions",
-                localField: _id,
+                localField: "_id",
                 foreignField : "channel",
                 as : "subscribers"
             }
@@ -319,7 +320,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             $lookup: {
                 from: "subscriptions",
-                localField: _id,
+                localField: "_id",
                 foreignField : "subscriber",
                 as : "subscribedTo"
             }
@@ -327,19 +328,19 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             $addFields: {
                 subscriberCount : {
-                    $size: "$subscriber"
+                    $size: {$ifNull: ["$subscriber", []]}
                 },
                 channelsSubscribedToCount: {
-                    $size: "$subscribedTo"
+                    $size:{$ifNull:  ["$subscribedTo", []]}
                 },
                 isSubscribed: {
                     $cond: {
                         if: {
                             $in: [req.user?._id, "$subscribers.subscriber"]
-                        }
-                    },
+                        },
                     then: true,
                     else: false
+                    },
                 }
             }
         },
@@ -369,7 +370,7 @@ const getWatchHistory = asyncHandler(async(req, res) =>{
     const user = await User.aggregate([
         {
             $match:{
-                _id: new mongoose.Types.ObjectId(req.user._id);
+                _id: new mongoose.Types.ObjectId(req.user._id)
             }
         },
         {
@@ -396,9 +397,11 @@ const getWatchHistory = asyncHandler(async(req, res) =>{
                             ]
                         }
                     },
-                    $addFields: {
-                        owner: {
-                            $first: "$owner"
+                    {
+                        $addFields:{
+                            owner: {
+                                $first: "$owner"
+                            }
                         }
                     }
                 ]
@@ -419,5 +422,6 @@ export {
     updateAccountDetails,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    getCurrentUser
  };

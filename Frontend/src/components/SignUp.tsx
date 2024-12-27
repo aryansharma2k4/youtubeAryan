@@ -52,7 +52,8 @@ function SignUp() {
 
     if (formData.avatar) form.append('avatar', formData.avatar);
     if (formData.coverImage) form.append('coverImage', formData.coverImage);
-
+    console.log(form);
+    
     const axiosInstance = axios.create({
       timeout: 50000,
     })

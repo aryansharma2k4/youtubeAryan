@@ -7,6 +7,7 @@ import Layout from './Layout.tsx'
 import SignUp from './components/SignUp.tsx'
 import Login from './components/Login.tsx'
 import Home from './components/Home.tsx'
+import { Toaster } from 'react-hot-toast'
 
 const Router = createBrowserRouter([
   {
@@ -33,5 +34,6 @@ const Router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider router={Router} />
+    <Toaster position='top-right' />
   </StrictMode>,
 )

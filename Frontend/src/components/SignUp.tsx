@@ -1,7 +1,8 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { useState } from "react";
 import axios from 'axios';
+import toast from "react-hot-toast"
 
 interface FormData {
   firstName: string;
@@ -13,6 +14,7 @@ interface FormData {
 }
 
 function SignUp() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -39,7 +41,6 @@ function SignUp() {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
     }
   };
-
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -65,14 +66,17 @@ function SignUp() {
           }
         }
       );
-      console.log(response.data);
-      console.log(response);
-      console.log(response.data.status);
+      if(response.data){
+        toast.success("Account created successfully")
+      }
+      setTimeout(() => {
+        navigate("/")
+      },2000)
       
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      
+      toast.error("Something went wrong")
     }
     
     

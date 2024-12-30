@@ -43,46 +43,48 @@ function SignUp() {
   };
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+  
     const form = new FormData();
-    form.append('fullName', formData.firstName)
-    form.append('email', formData.email);
-    form.append('username', formData.email);
-    form.append('password', formData.password);
-
-    if (formData.avatar) form.append('avatar', formData.avatar);
-    if (formData.coverImage) form.append('coverImage', formData.coverImage);
-    console.log(form);
-    
+    form.append("fullName", formData.firstName);
+    form.append("email", formData.email);
+    form.append("username", formData.email);
+    form.append("password", formData.password);
+  
+    if (formData.avatar) form.append("avatar", formData.avatar);
+    if (formData.coverImage) form.append("coverImage", formData.coverImage);
+  
     const axiosInstance = axios.create({
       timeout: 50000,
-    })
+    });
+  
     try {
       const response = await axiosInstance.post(
-        'http://127.0.0.1:8000/api/v1/users/register',
+        "http://127.0.0.1:8000/api/v1/users/register",
         form,
         {
-          headers:{
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
-      if(response.data){
-        toast.success("Account created successfully")
+  
+      if (response.data && response.data.data.accessToken) {
+        const { accessToken } = response.data.data;
+  
+        // Save the token in localStorage or any state management system
+        localStorage.setItem("accessToken", accessToken);
+  
+        toast.success("Account created successfully");
+  
+        // Redirect to the homepage
+        navigate("/", { state: { accessToken } });
       }
-      setTimeout(() => {
-        navigate("/")
-      },2000)
-      
-      
     } catch (error: any) {
       console.error(error);
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     }
-    
-    
-
   };
+  
 
   return (
     <section className="bg-gray-50">

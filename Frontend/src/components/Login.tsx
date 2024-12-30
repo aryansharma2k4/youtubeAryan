@@ -35,7 +35,10 @@ function Login() {
           },
         }
       );
+      const {accessToken} = response.data.data
+      localStorage.setItem('accessToken',accessToken)
       toast.success("User Logged In successfully")
+
       setTimeout(() => {
         navigate("/")
       },2000)

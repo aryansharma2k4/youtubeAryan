@@ -1,8 +1,55 @@
+import { useEffect, useState } from "react";
 import hamburgIcon from "../assets/hamburg.png";
 import logo from "../assets/logo.png";
 import searchButton from "../assets/magnifyingGlass.png";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 function Navbar() {
+  
+  const accessToken = localStorage.getItem("accessToken")
+
+  const [userData, setUserData] = useState({})
+  const axiosInstance = axios.create({
+    timeout: 10000,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try{
+        const response = await axiosInstance.get("http://localhost:8000/api/v1/users/current-user")
+        setUserData(response.data.data)
+        
+      }
+      catch(err){
+        console.error(err); 
+      }
+    }
+    fetchUser();
+  },[]);
+
+
+
+  const [isLoggedIn, setIsLoggedIn] = useState(0)
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken")
+    if(accessToken){
+      setIsLoggedIn(1)
+    }else{
+      setIsLoggedIn(0)
+    }
+  })
+
+  console.log(userData);
+  
+  
+  
+
   return (
     <div className="flex items-center justify-between px-4 py-2 mt-2 border-gray-400 shadow-md">
       {/* Left Section */}
@@ -29,8 +76,8 @@ function Navbar() {
 
       {/* Right Section */}
       <div className="flex items-center space-x-6 sm:space-x-12 sm:mr-6">
-        <div className="hidden sm:flex rounded-full shadow-lg p-2 bg-[#ECEBDE]">+ Create</div>
-        <div>Avatar Link</div>
+        <Link to="/publishVideo"><div className="hidden sm:flex rounded-full shadow-lg p-2 bg-[#ECEBDE]">+ Create</div></Link>
+        {isLoggedIn ? (<Link to="/user"><div><img className="w-[41px] rounded-full" src={userData.avatar} alt="" /></div></Link>) : (<Link to="/sign-up"><div>Sign-Up / Sign-In</div></Link>)}
       </div>
     </div>
   );

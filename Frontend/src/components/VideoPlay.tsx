@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "./Navbar";
+import toast from "react-hot-toast";
 
 function VideoPlay() {
   const accessToken = localStorage.getItem("accessToken");
@@ -38,9 +39,35 @@ function VideoPlay() {
     fetchData();
   }, [id, accessToken]);
 
-  const handleAddComment = () => {
-    
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(e.target.value);
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return; // Prevent adding empty comments
+
+    try {
+      const response = await axiosInstance.post(
+        `http://127.0.0.1:8000/api/v1/comment/c/${id}/addComment`,
+        {
+          content: newComment,
+        }
+      );
+      if(response.data.statusCode){
+        toast.success("Comment added successfully")
+      }
+      else{
+        toast.error("Uable to POST comment please try again")
+      }
+      
+
+      setComments((prevComments) => [...prevComments, response.data.data]);
+
+      setNewComment("");
+    } catch (err) {
+      console.error("Error adding comment:", err);
+    }
+  };
 
   return (
     <>
@@ -90,7 +117,7 @@ function VideoPlay() {
             <input
               type="text"
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={handleChange}
               placeholder="Add a comment..."
               className="w-full p-2 border border-gray-300 rounded"
             />

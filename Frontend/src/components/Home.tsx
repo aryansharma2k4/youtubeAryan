@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
 
-function HomePage() {
+function Home() {
   const [videoList, setVideoList] = useState([]); // State for storing video list
   const [tokenExpired, setTokenExpired] = useState(false); // State to track token expiration
   const location = useLocation();
@@ -24,7 +24,7 @@ function HomePage() {
   };
 
   const axiosInstance = axios.create({
-    timeout: 10000,
+    timeout: 100000,
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -106,4 +106,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default Home;

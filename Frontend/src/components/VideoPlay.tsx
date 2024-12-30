@@ -7,8 +7,10 @@ function VideoPlay() {
   const accessToken = localStorage.getItem("accessToken");
   const { id } = useParams();
 
-  const [videoData, setVideoData] = useState<any>({}); // Changed to setVideoData
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
+  const [videoData, setVideoData] = useState<any>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newComment, setNewComment] = useState<string>("");
+  const [comments, setComments] = useState<any[]>([]);
 
   const axiosInstance = axios.create({
     timeout: 10000,
@@ -17,7 +19,7 @@ function VideoPlay() {
     },
   });
 
-  // Use useEffect to handle the async request
+  // Fetch video data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -25,34 +27,36 @@ function VideoPlay() {
           `http://127.0.0.1:8000/api/v1/video/v/${id}`
         );
         setVideoData(response.data.data[0]);
-        setLoading(false); // Set loading to false once data is fetched
+        setComments(response.data.data[0].comments || []);
+        setLoading(false);
       } catch (err) {
         console.error(err);
-        setLoading(false); // Ensure loading is set to false even on error
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [id, accessToken]);
 
-  const commentList = videoData.comments || [];
-  console.log(commentList[0]);
-  
+  const handleAddComment = () => {
+    
+  }
 
   return (
     <>
       <Navbar />
-      <div className="flex">
-        <div className="mt-4 ml-4">
+      <div className="flex w-full">
+        {/* Video Section */}
+        <div className="w-[60%] p-4">
           {loading ? (
-            <p>Loading...</p> // Show loading message
+            <p>Loading...</p>
           ) : (
             <>
               <video
                 autoPlay
                 src={videoData.videoFile}
                 controls
-                className="w-[800px] h-[600px]"
+                className="w-full"
                 preload="metadata"
               ></video>
               <h2 className="mt-4 text-3xl font-semibold">{videoData.title}</h2>
@@ -62,18 +66,41 @@ function VideoPlay() {
             </>
           )}
         </div>
-        <div className="mt-4 ml-12">
-          <h1 className="text-3xl font-bold">Comments</h1>
-          {commentList.length > 0 ? (
-            commentList.map((comment: any, index: number) => (
-              <div key={index}>
-                <div className="mt-4">{new Date(comment.createdAt).toLocaleString()}</div> {/* Convert to readable format */}
-                <div className="text-xl">{comment.content}</div>
-              </div>
-            ))
-          ) : (
-            <p>No comments yet.</p>
-          )}
+
+        {/* Comments Section */}
+        <div className="w-[40%] p-4 border-l border-gray-300">
+          <h1 className="text-3xl font-bold mb-4">Comments</h1>
+          <div className="flex-1 overflow-y-auto h-[400px] border border-gray-300 rounded p-2">
+            {comments.length > 0 ? (
+              comments.map((comment, index) => (
+                <div key={index} className="mb-4">
+                  <div className="text-gray-500 text-sm">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </div>
+                  <div className="text-lg">{comment.content}</div>
+                </div>
+              ))
+            ) : (
+              <p>No comments yet.</p>
+            )}
+          </div>
+
+          {/* Add Comment Box */}
+          <div className="mt-4 sticky bottom-0">
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+            <button
+              onClick={handleAddComment}
+              className="mt-2 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+              Add Comment
+            </button>
+          </div>
         </div>
       </div>
     </>

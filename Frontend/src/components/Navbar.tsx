@@ -24,7 +24,6 @@ function Navbar() {
       try{
         const response = await axiosInstance.get("http://localhost:8000/api/v1/users/current-user")
         setUserData(response.data.data)
-        
       }
       catch(err){
         console.error(err); 
@@ -32,6 +31,9 @@ function Navbar() {
     }
     fetchUser();
   },[]);
+  const id = userData._id;
+  
+  
 
 
 
@@ -45,7 +47,6 @@ function Navbar() {
     }
   })
 
-  console.log(userData);
   
   
   
@@ -58,7 +59,9 @@ function Navbar() {
           <img src={hamburgIcon} alt="Menu Open Button" className="h-6 sm:h-8" />
         </button>
         <div className="mr-4 sm:h-6 w-24 mb-2">
-          <img src={logo} alt="YouTube logo" className="h-6 sm:h-8" />
+          <Link to="/">
+            <img src={logo} alt="YouTube logo" className="h-6 sm:h-8" />
+          </Link>
         </div>
       </div>
 
@@ -77,7 +80,7 @@ function Navbar() {
       {/* Right Section */}
       <div className="flex items-center space-x-6 sm:space-x-12 sm:mr-6">
         <Link to="/publishVideo"><div className="hidden sm:flex rounded-full shadow-lg p-2 bg-[#ECEBDE]">+ Create</div></Link>
-        {isLoggedIn ? (<Link to="/user"><div><img className="w-[41px] rounded-full" src={userData.avatar} alt="" /></div></Link>) : (<Link to="/sign-up"><div>Sign-Up / Sign-In</div></Link>)}
+        {isLoggedIn ? (<Link to={`/u/${id}`}><div><img className="w-[41px] rounded-full" src={userData.avatar} alt="" /></div></Link>) : (<Link to="/sign-up"><div>Sign-Up / Sign-In</div></Link>)}
       </div>
     </div>
   );

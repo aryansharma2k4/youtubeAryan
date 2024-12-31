@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import hamburgIcon from "../assets/hamburg.png";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.svg"
 import searchButton from "../assets/magnifyingGlass.png";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -60,7 +60,7 @@ function Navbar() {
         </button>
         <div className="mr-4 sm:h-6 w-24 mb-2">
           <Link to="/">
-            <img src={logo} alt="YouTube logo" className="h-6 sm:h-8" />
+            <img src={logo} alt="YouTube logo" className="h-9 sm:h-8" />
           </Link>
         </div>
       </div>

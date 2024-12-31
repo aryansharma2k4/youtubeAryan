@@ -30,10 +30,13 @@ function VideoPlay() {
         setVideoData(response.data.data[0]);
         setComments(response.data.data[0].comments || []);
         setLoading(false);
+        console.log(response.data.data);
+        
       } catch (err) {
         console.error(err);
         setLoading(false);
       }
+      
     };
 
     fetchData();

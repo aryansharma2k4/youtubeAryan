@@ -43,7 +43,7 @@ function SignUp() {
   };
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+      
     const form = new FormData();
     form.append("fullName", formData.firstName);
     form.append("email", formData.email);

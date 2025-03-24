@@ -1,75 +1,106 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
-import axios from "axios";
+
+interface Video {
+  _id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+}
+
+interface ApiResponse {
+  data: {
+    docs: Video[];
+  };
+}
 
 function Home() {
-  const [videoList, setVideoList] = useState([]); // State for storing video list
-  const [tokenExpired, setTokenExpired] = useState(false); // State to track token expiration
+  const [videoList, setVideoList] = useState<Video[]>([]); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const accessToken =
-    location.state?.accessToken || localStorage.getItem("accessToken");
+  const accessToken = useMemo(() => 
+    location.state?.accessToken || localStorage.getItem("accessToken"), 
+    [location.state?.accessToken]
+  );
 
-  // Function to decode JWT and check if it's expired
-  const isTokenExpired = (token: string): boolean => {
+  // Improved token decoder with better error handling
+  const isTokenExpired = useCallback((token: string): boolean => {
+    if (!token) return true;
+    
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.exp * 1000 < Date.now(); // Compare token expiration with current time
+      const base64Url = token.split('.')[1];
+      if (!base64Url) return true;
+      
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      return payload.exp * 1000 < Date.now();
     } catch (error) {
-      console.error("Error decoding token:", error);
-      return true; // Treat as expired if decoding fails
+      console.error("Invalid token format:", error);
+      return true;
     }
-  };
+  }, []);
 
-  const axiosInstance = axios.create({
-    timeout: 100000,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  const fetchVideos = useCallback(async () => {
+    if (!accessToken) {
+      setError("No access token found");
+      setLoading(false);
+      return;
+    }
 
-  const fetchVideos = async () => {
     try {
-      const response = await axiosInstance.get(
-        "http://127.0.0.1:8000/api/v1/video/"
-      );
-      setVideoList(response.data.data.docs); // Update state with fetched videos
+      setLoading(true);
+      const response = await fetch("http://127.0.0.1:8000/api/v1/video/", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Authorization failed");
+          return;
+        }
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const data: ApiResponse = await response.json();
+      setVideoList(data.data.docs);
     } catch (error) {
       console.error("Error fetching videos:", error);
-      if (error.response?.status === 401) {
-        setTokenExpired(true); // Mark token as expired if backend returns 401
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!accessToken) {
-      console.error("No access token found!");
-      setTokenExpired(true); // Mark token as expired if not found
-    } else if (isTokenExpired(accessToken)) {
-      console.error("Access token is expired!");
-      setTokenExpired(true); // Mark token as expired if it's invalid
-    } else {
-      fetchVideos(); // Fetch videos when component mounts
+      setError("Failed to load videos");
+    } finally {
+      setLoading(false);
     }
   }, [accessToken]);
 
-  if (tokenExpired) {
+  useEffect(() => {
+    if (!accessToken || isTokenExpired(accessToken)) {
+      setError("Session expired");
+      setLoading(false);
+    } else {
+      fetchVideos();
+    }
+  }, [accessToken, isTokenExpired, fetchVideos]);
+
+  if (error && error.includes("Session expired") || error?.includes("Authorization failed") || error?.includes("No access token")) {
     return (
-      <div className="flex flex-col items-center justify-center mt-16">
-        <p className="text-red-500 text-lg">Session expired. Please sign in again.</p>
-        <div className="mt-4">
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-red-500 text-lg mb-4">{error}. Please sign in again.</p>
+        <div className="flex gap-4">
           <Link
             to="/sign-in"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
           >
             Sign In
           </Link>
           <Link
             to="/sign-up"
-            className="ml-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
           >
             Sign Up
           </Link>
@@ -81,27 +112,50 @@ function Home() {
   return (
     <>
       <Navbar />
-      <div className="ml-16 mt-16">
-        {videoList.length === 0 ? (
-          <p>Loading videos...</p> /* Show loading message */
+      <main className="container mx-auto px-4 mt-16 pt-4">
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-lg">Loading videos...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500">
+            <p>{error}</p>
+            <button 
+              onClick={() => fetchVideos()} 
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : videoList.length === 0 ? (
+          <p className="text-center text-lg">No videos available</p>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {videoList.map((video: any, index) => (
-              <div key={index} className="border rounded p-4 shadow-md">
-                <Link to={`/video/${video._id}`}>
-                  <img
-                    className="w-[800px] h-[250px]"
-                    src={video.thumbnail}
-                    alt="thumbnail"
-                  />
-                  <div className="text-xl mt-2">{video.title}</div>
-                  <div>{video.description}</div>
-                </Link>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {videoList.map((video) => (
+              <Link 
+                key={video._id} 
+                to={`/video/${video._id}`}
+                className="block transition-transform hover:scale-105"
+              >
+                <article className="border rounded overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                  <div className="aspect-video overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={video.thumbnail}
+                      alt={`Thumbnail for ${video.title}`}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h2 className="text-xl font-semibold truncate">{video.title}</h2>
+                    <p className="text-gray-600 line-clamp-2 mt-1">{video.description}</p>
+                  </div>
+                </article>
+              </Link>
             ))}
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }

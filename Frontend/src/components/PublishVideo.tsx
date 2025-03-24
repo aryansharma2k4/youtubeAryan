@@ -10,15 +10,26 @@ function PublishVideo() {
     description: "",
     video: null,
     thumbnail: null,
+    isAnonymous: false,
   });
 
   const [progress, setProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState({
+    video: false,
+    thumbnail: false,
+  });
 
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,12 +39,30 @@ function PublishVideo() {
     }
   };
 
+  const handleDrag = (e: React.DragEvent, type: "video" | "thumbnail", active: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive((prev) => ({ ...prev, [type]: active }));
+  };
+
+  const handleDrop = (e: React.DragEvent, type: "video" | "thumbnail") => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive((prev) => ({ ...prev, [type]: false }));
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFormData((prev) => ({ ...prev, [type]: e.dataTransfer.files[0] }));
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsUploading(true);
     try {
       const form = new FormData();
       form.append("title", formData.title);
       form.append("description", formData.description);
+      form.append("isAnonymous", String(formData.isAnonymous));
       if (formData.video) {
         form.append("video", formData.video);
       }
@@ -57,7 +86,7 @@ function PublishVideo() {
             "Content-Type": "multipart/form-data",
           },
           onUploadProgress: (data) => {
-            setProgress(Math.round((100 * data.loaded) / data.total));
+            setProgress(Math.round((100 * data.loaded) / (data.total || 1)));
           },
         }
       );
@@ -69,77 +98,178 @@ function PublishVideo() {
     } catch (error) {
       console.error(error);
       toast.error("Unable to publish video");
+    } finally {
+      setIsUploading(false);
     }
   };
 
+  const getFileNameFromState = (fileState: File | null) => {
+    if (fileState) {
+      return fileState.name;
+    }
+    return "No file selected";
+  };
+
   return (
-    <section className="bg-gray-50">
-      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-        <a href="#" className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
-          <img className="h-12 mr-2" src={logo} alt="logo" />
-        </a>
-        <div className="w-full bg-[#ECEBDE] rounded-lg shadow sm:max-w-md xl:p-0">
-          <div className="p-6 space-y-4 sm:p-8">
-            <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Upload A Video</h1>
-            <form className="space-y-4" onSubmit={handleFormSubmit}>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-center mb-8">
+          <a href="/" className="flex items-center space-x-2">
+            <img className="h-12" src={logo} alt="logo" />
+            <span className="text-2xl font-bold text-gray-800">Upload Center</span>
+          </a>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-6 py-8 sm:p-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Share Your Content</h1>
+            
+            <form className="space-y-6" onSubmit={handleFormSubmit}>
+              {/* Title Field */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">Video Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Video Title</label>
                 <input
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg block w-full p-2.5"
-                  placeholder="Title"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-gray-50"
+                  placeholder="Enter a catchy title for your video"
                   required
                 />
               </div>
+              
+              {/* Description Field */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Description"
-                  className="bg-gray-50 border border-gray-300 text-black rounded-lg block w-full p-2.5"
+                  placeholder="Describe your video to help viewers find it"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-gray-50 min-h-32"
                   required
                 />
               </div>
+              
+              {/* Video Upload */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">Video</label>
-                <input
-                  type="file"
-                  name="video"
-                  onChange={handleFileChange}
-                  className="bg-gray-50 border border-gray-300 text-black rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                  required
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Video</label>
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors duration-200 ${
+                    dragActive.video ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                  }`}
+                  onDragOver={(e) => handleDrag(e, "video", true)}
+                  onDragLeave={(e) => handleDrag(e, "video", false)}
+                  onDrop={(e) => handleDrop(e, "video")}
+                >
+                  <input
+                    type="file"
+                    name="video"
+                    id="video-upload"
+                    className="hidden"
+                    accept="video/*"
+                    onChange={handleFileChange}
+                    required
+                  />
+                  <label htmlFor="video-upload" className="flex flex-col items-center justify-center py-6 cursor-pointer">
+                    <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h18M3 16h18"></path>
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">Drag and drop your video or click to browse</span>
+                    <span className="mt-2 text-xs text-gray-500">{formData.video ? getFileNameFromState(formData.video) : "MP4, MOV, or AVI up to 100MB"}</span>
+                  </label>
+                </div>
               </div>
+
+              {/* Thumbnail Upload */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">Thumbnail</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors duration-200 ${
+                    dragActive.thumbnail ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                  }`}
+                  onDragOver={(e) => handleDrag(e, "thumbnail", true)}
+                  onDragLeave={(e) => handleDrag(e, "thumbnail", false)}
+                  onDrop={(e) => handleDrop(e, "thumbnail")}
+                >
+                  <input
+                    type="file"
+                    name="thumbnail"
+                    id="thumbnail-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    required
+                  />
+                  <label htmlFor="thumbnail-upload" className="flex flex-col items-center justify-center py-6 cursor-pointer">
+                    <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">Drag and drop your thumbnail or click to browse</span>
+                    <span className="mt-2 text-xs text-gray-500">{formData.thumbnail ? getFileNameFromState(formData.thumbnail) : "JPG, PNG or GIF up to 5MB"}</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Anonymous Option */}
+              <div className="flex items-center">
                 <input
-                  type="file"
-                  name="thumbnail"
-                  onChange={handleFileChange}
-                  className="bg-gray-50 border border-gray-300 text-black rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                  required
+                  type="checkbox"
+                  id="isAnonymous"
+                  name="isAnonymous"
+                  checked={formData.isAnonymous}
+                  onChange={handleCheckboxChange}
+                  className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
+                <label htmlFor="isAnonymous" className="ml-2 block text-sm text-gray-700">
+                  Upload anonymously (your username won't be displayed)
+                </label>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
+
+              {/* Progress Bar */}
+              {progress > 0 && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                    <span>Upload Progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Submit Button */}
               <button
-                className="w-full bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center text-gray-900"
+                type="submit"
+                disabled={isUploading}
+                className={`w-full flex justify-center items-center py-3 px-4
+                          rounded-lg text-white font-medium transition duration-200
+                          ${isUploading 
+                            ? 'bg-blue-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                          }`}
               >
-                Upload Video
+                {isUploading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Uploading Video...
+                  </>
+                ) : (
+                  'Publish Video'
+                )}
               </button>
             </form>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

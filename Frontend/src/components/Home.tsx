@@ -7,6 +7,12 @@ interface Video {
   title: string;
   description: string;
   thumbnail: string;
+  isAnonymous?: boolean;
+  owner?: {
+    username?: string;
+    fullName?: string;
+    avatar?: string;
+  };
 }
 
 interface ApiResponse {
@@ -115,7 +121,10 @@ function Home() {
       <main className="container mx-auto px-4 mt-16 pt-4">
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <p className="text-lg">Loading videos...</p>
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-lg mt-4">Loading videos...</p>
+            </div>
           </div>
         ) : error ? (
           <div className="text-center text-red-500">
@@ -128,32 +137,84 @@ function Home() {
             </button>
           </div>
         ) : videoList.length === 0 ? (
-          <p className="text-center text-lg">No videos available</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videoList.map((video) => (
-              <Link 
-                key={video._id} 
-                to={`/video/${video._id}`}
-                className="block transition-transform hover:scale-105"
-              >
-                <article className="border rounded overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      className="w-full h-full object-cover"
-                      src={video.thumbnail}
-                      alt={`Thumbnail for ${video.title}`}
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h2 className="text-xl font-semibold truncate">{video.title}</h2>
-                    <p className="text-gray-600 line-clamp-2 mt-1">{video.description}</p>
-                  </div>
-                </article>
-              </Link>
-            ))}
+          <div className="text-center py-16">
+            <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h18M3 16h18"></path>
+            </svg>
+            <p className="text-xl mt-4">No videos available</p>
+            <p className="text-gray-500 mt-2">Videos you upload will appear here</p>
           </div>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold mb-6">Discover Videos</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {videoList.map((video) => (
+                <Link 
+                  key={video._id} 
+                  to={`/video/${video._id}`}
+                  className="block transition-transform hover:scale-105 h-full"
+                >
+                  <article className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
+                    <div className="aspect-video overflow-hidden relative">
+                      <img
+                        className="w-full h-full object-cover"
+                        src={video.thumbnail}
+                        alt={`Thumbnail for ${video.isAnonymous ? 'Anonymous Video' : video.title}`}
+                        loading="lazy"
+                      />
+                      {video.isAnonymous && (
+                        <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full">
+                          Anonymous
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4 flex-grow flex flex-col">
+                      <h2 className="text-lg font-semibold truncate">
+                        {video.isAnonymous ? 'Anonymous Video' : video.title}
+                      </h2>
+                      <p className="text-gray-600 line-clamp-2 mt-1 flex-grow">
+                        {video.isAnonymous ? 'Posted anonymously' : video.description}
+                      </p>
+                      
+                      <div className="flex items-center mt-3 pt-3 border-t border-gray-100">
+                        {video.isAnonymous ? (
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                              </svg>
+                            </div>
+                            <span className="ml-2 text-sm text-gray-500">Anonymous User</span>
+                          </div>
+                        ) : video.owner ? (
+                          <div className="flex items-center">
+                            {video.owner.avatar ? (
+                              <img 
+                                src={video.owner.avatar} 
+                                alt={video.owner.username || "User"} 
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  {video.owner.username ? video.owner.username.charAt(0).toUpperCase() : "U"}
+                                </span>
+                              </div>
+                            )}
+                            <span className="ml-2 text-sm text-gray-700">
+                              {video.owner.username || video.owner.fullName || "User"}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500">Unknown User</span>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </main>
     </>

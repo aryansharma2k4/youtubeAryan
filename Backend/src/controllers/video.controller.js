@@ -12,10 +12,13 @@ import { User } from "../models/user.model.js";
 const publishVideo = asyncHandler(async(req, res) => {
     //upload the video on cloudinary 
     //push it to the mongodb
-    const {title, description} = req.body;
+    const {title, description, isAnonymous} = req.body;
     if([title, description].some((field) => field?.trim() === "")){
         throw new ApiError(400, "All fields are required")
     }
+
+    // Handle isAnonymous with default value if not provided
+    const anonymousStatus = isAnonymous === undefined ? false : Boolean(isAnonymous);
 
     //got the title and description of the video
     const videoLocalPath = req.files?.video?.[0]?.path;
@@ -45,7 +48,8 @@ const publishVideo = asyncHandler(async(req, res) => {
         duration: video.duration,
         isPublished: true,
         views: 0,
-        owner
+        owner,
+        isAnonymous: anonymousStatus  // Include isAnonymous field in the video creation
 
     })
     if(!publishedVideo){
@@ -53,7 +57,6 @@ const publishVideo = asyncHandler(async(req, res) => {
     }
     return res.status(201)
     .json(new ApiResponse(200, publishedVideo, "Video uploaded Successfully"));
-
 })
 const getAllVideos = asyncHandler(async(req, res) => {
     const {page = 1, limit = 10, query, sortBy, sortType, userId} = req.query;
@@ -109,6 +112,20 @@ const getAllVideos = asyncHandler(async(req, res) => {
         },
         {
             $unwind: "$ownerdetails"
+        },
+        {
+            $project: {
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1,
+                createdAt: 1,
+                isPublished: 1,
+                ownerDetails: 1,
+                isAnonymous: 1  // Include isAnonymous field in the projection
+            }
         }
     )
     const videoAggregate = await Video.aggregate(pipeline);
@@ -118,14 +135,12 @@ const getAllVideos = asyncHandler(async(req, res) => {
     }
     console.log(Video.find({$isPublished: true}));
     
-
     try {
         const video = await Video.aggregatePaginate(videoAggregate, options)
         return res.status(200).json(new ApiResponse(200, video, "Video Fetched successfully"));
     } catch (error) {
         return res.status(500).json(500, null, "error fetched successfully")
     }
-    
 })
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
@@ -253,7 +268,8 @@ const getVideoById = asyncHandler(async (req, res) => {
                 owner: 1,
                 likesCount: 1,
                 isLiked: 1,
-                thumbnail: 1
+                thumbnail: 1,
+                isAnonymous: 1  // Include isAnonymous field in the projection
             }
         }
     ]);

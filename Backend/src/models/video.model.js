@@ -34,6 +34,10 @@ const videoSchema = new Schema(
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User"
+        },
+        isAnonymous: {
+            type: Boolean,
+            required: true
         }
 
     }, 

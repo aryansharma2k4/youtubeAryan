@@ -30,6 +30,7 @@ function VideoPlay() {
         );
         setVideoData(response.data.data[0]);
         setComments(response.data.data[0].comments || []);
+        setIsLiked(response.data.data[0].isLiked || false);
         setLoading(false);
         console.log(response.data.data);
         
@@ -70,9 +71,16 @@ function VideoPlay() {
     }
   };
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-    // Here you would add the actual API call to like/unlike the video
+  const toggleLike = async () => {
+    try {
+      const response = await axiosInstance.post(
+        `http://127.0.0.1:8000/api/v1/likes/toggle/v/${id}`
+      );
+      setIsLiked(!isLiked);
+      // Update like count if needed
+    } catch (err) {
+      console.error("Error toggling like:", err);
+    }
   };
 
   return (
@@ -100,19 +108,35 @@ function VideoPlay() {
                 </div>
                 
                 <div className="p-6">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">{videoData.title}</h2>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-3xl font-bold text-gray-800">{videoData.title}</h2>
+                    {videoData.isAnonymous && (
+                      <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                        Anonymous
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      {videoData.owner?.avatar && (
+                      {!videoData.isAnonymous && videoData.owner?.avatar && (
                         <img 
                           src={videoData.owner.avatar} 
                           alt="Channel" 
                           className="w-12 h-12 rounded-full border-2 border-gray-200"
                         />
                       )}
+                      {videoData.isAnonymous ? (
+                        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-gray-500 font-bold">A</span>
+                        </div>
+                      ) : null}
                       <div>
-                        <p className="font-medium text-gray-800">{videoData.owner?.fullName || "Channel Name"}</p>
+                        <p className="font-medium text-gray-800">
+                          {videoData.isAnonymous 
+                            ? "Anonymous User" 
+                            : videoData.owner?.fullName || "Channel Name"}
+                        </p>
                         <p className="text-sm text-gray-500">{videoData.views || 0} views • {new Date(videoData.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -125,7 +149,7 @@ function VideoPlay() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905v.714L7.5 9h-3a2 2 0 00-2 2v.5" />
                         </svg>
-                        {videoData.likes || 0}
+                        {videoData.likesCount || 0}
                       </button>
                       
                       <button className="flex items-center gap-1 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">

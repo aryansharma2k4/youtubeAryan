@@ -29,7 +29,8 @@ function PublishVideo() {
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
+    if(checked) setFormData((prev) => ({ ...prev, [name]: 1 }));
+    else setFormData((prev) => ({ ...prev, [name]: 0 }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,13 +63,15 @@ function PublishVideo() {
       const form = new FormData();
       form.append("title", formData.title);
       form.append("description", formData.description);
-      form.append("isAnonymous", String(formData.isAnonymous));
+      form.append("isAnonymous", formData.isAnonymous ? "true" : "false");
       if (formData.video) {
         form.append("video", formData.video);
       }
       if (formData.thumbnail) {
         form.append("thumbnail", formData.thumbnail);
       }
+      console.log(form.get("isAnonymous"));
+      
 
       const accessToken = localStorage.getItem("accessToken");
       const axiosInstance = axios.create({

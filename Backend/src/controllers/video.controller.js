@@ -18,7 +18,9 @@ const publishVideo = asyncHandler(async(req, res) => {
     }
 
     // Handle isAnonymous with default value if not provided
-    const anonymousStatus = isAnonymous === undefined ? false : Boolean(isAnonymous);
+    const anonymousStatus = isAnonymous
+    console.log(isAnonymous);
+    
 
     //got the title and description of the video
     const videoLocalPath = req.files?.video?.[0]?.path;
@@ -59,7 +61,7 @@ const publishVideo = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, publishedVideo, "Video uploaded Successfully"));
 })
 const getAllVideos = asyncHandler(async(req, res) => {
-    const {page = 1, limit = 10, query, sortBy, sortType, userId} = req.query;
+    const {page = 1, limit = 20, query, sortBy, sortType, userId} = req.query;
     const pipeline = [];
     if(query){
         pipeline.push({

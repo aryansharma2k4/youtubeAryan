@@ -36,8 +36,8 @@ const videoSchema = new Schema(
             ref: "User"
         },
         isAnonymous: {
-            type: Boolean,
-            required: true
+            type: String,
+            default: "false"
         }
 
     }, 

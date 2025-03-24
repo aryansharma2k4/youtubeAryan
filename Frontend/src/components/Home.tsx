@@ -7,7 +7,7 @@ interface Video {
   title: string;
   description: string;
   thumbnail: string;
-  isAnonymous?: boolean;
+  isAnonymous?: string;
   owner?: {
     username?: string;
     fullName?: string;
@@ -90,6 +90,8 @@ function Home() {
       setLoading(false);
     } else {
       fetchVideos();
+      console.log(videoList);
+      
     }
   }, [accessToken, isTokenExpired, fetchVideos]);
 
@@ -159,10 +161,10 @@ function Home() {
                       <img
                         className="w-full h-full object-cover"
                         src={video.thumbnail}
-                        alt={`Thumbnail for ${video.isAnonymous ? 'Anonymous Video' : video.title}`}
+                        alt={`Thumbnail for ${video.title}`}
                         loading="lazy"
                       />
-                      {video.isAnonymous && (
+                      {video.isAnonymous === "true" && (
                         <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full">
                           Anonymous
                         </div>
@@ -170,14 +172,14 @@ function Home() {
                     </div>
                     <div className="p-4 flex-grow flex flex-col">
                       <h2 className="text-lg font-semibold truncate">
-                        {video.isAnonymous ? 'Anonymous Video' : video.title}
+                        {video.title}
                       </h2>
                       <p className="text-gray-600 line-clamp-2 mt-1 flex-grow">
-                        {video.isAnonymous ? 'Posted anonymously' : video.description}
+                        {video.description}
                       </p>
                       
                       <div className="flex items-center mt-3 pt-3 border-t border-gray-100">
-                        {video.isAnonymous ? (
+                        {video.isAnonymous === "true" ? (
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

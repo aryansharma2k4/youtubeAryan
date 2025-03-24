@@ -110,7 +110,7 @@ function VideoPlay() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-3xl font-bold text-gray-800">{videoData.title}</h2>
-                    {videoData.isAnonymous && (
+                    {videoData.isAnonymous === "true" && (
                       <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
                         Anonymous
                       </span>
@@ -119,21 +119,21 @@ function VideoPlay() {
                   
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      {!videoData.isAnonymous && videoData.owner?.avatar && (
+                      {videoData.isAnonymous !== "true" && videoData.owner?.avatar && (
                         <img 
                           src={videoData.owner.avatar} 
                           alt="Channel" 
                           className="w-12 h-12 rounded-full border-2 border-gray-200"
                         />
                       )}
-                      {videoData.isAnonymous ? (
+                      {videoData.isAnonymous === "true" ? (
                         <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
                           <span className="text-gray-500 font-bold">A</span>
                         </div>
                       ) : null}
                       <div>
                         <p className="font-medium text-gray-800">
-                          {videoData.isAnonymous 
+                          {videoData.isAnonymous === "true"
                             ? "Anonymous User" 
                             : videoData.owner?.fullName || "Channel Name"}
                         </p>

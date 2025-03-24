@@ -204,7 +204,7 @@ function Home() {
                               </div>
                             )}
                             <span className="ml-2 text-sm text-gray-700">
-                              {video.owner.username || video.owner.fullName || "User"}
+                              {video.owner.fullName}
                             </span>
                           </div>
                         ) : (
